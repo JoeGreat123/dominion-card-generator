@@ -217,10 +217,16 @@ function initCardImageGenerator() {
                 while (word) {
                     var match = word.match(iconWithNumbersPatternSingle);
                     if (match) {
-                        var familyOriginal = family;
-                        family = "mySpecials";
-                        var localY = y;
-                        var localScale = scale;
+						var familyOriginal = family;
+						family = "mySpecials";
+						var localY = y;
+						var localScale = scale;
+
+						// Keep a standalone +$ bonus at a fixed size
+						var fixedBonus = words.length === 1 && word.startsWith("+$");
+						if (fixedBonus) {
+						    localScale = 64 / 96;
+						}
                         if (words.length === 1 && !word.startsWith('+')) {
                             localY += 115 - scale * 48;
                             context.font = "bold 192pt " + family;
@@ -252,9 +258,12 @@ function initCardImageGenerator() {
                             match[1] = match[0].charAt(0);
                         }
                         if (match[1]) {
-                            if (context.font[0] !== "b")
-                                context.font = "bold " + context.font;
-                            context.fillText(match[1], x, localY);
+if (fixedBonus) {
+    context.font = "bold 64pt " + familyOriginal;
+} else if (context.font[0] !== "b") {
+    context.font = "bold " + context.font;
+}
+context.fillText(match[1], x, localY);
                             x += context.measureText(match[1]).width + 10 * localScale;
                         }
 
@@ -405,6 +414,13 @@ function initCardImageGenerator() {
                             context.font = "bold " + boldSize + "pt myText"; //resizing up to 64
                             progressiveWidth = context.measureText(line).width; //=, not +=
                             context.font = properFont;
+							} else if (line.startsWith("+$") &&
+           line.match(iconWithNumbersPatternSingle)) {
+    heightToAdd = 90;
+    var properFont = context.font;
+    context.font = "64pt myText";
+    progressiveWidth = getWidthOfLineWithIconsReplacedWithSpaces(line);
+    context.font = properFont;
                         } else if (line.match(iconWithNumbersPatternSingle) && !line.startsWith('+')) {
                             heightToAdd = 275; //192 * 1.433
                             var properFont = context.font;
